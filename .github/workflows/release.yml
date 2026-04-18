@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name (example: v1.0.0)"
+        required: true
+      release_name:
+        description: "Release title"
+        required: true
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish self-contained exe
+        run: dotnet publish EdgeFormEditor/EdgeFormEditor.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist/SelfContained
+
+      - name: Prepare artifact zip
+        shell: pwsh
+        run: Compress-Archive -Path dist/SelfContained/EdgeFormEditor.exe -DestinationPath dist/EdgeFormEditor-win-x64.zip -Force
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}
+          name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_name || github.ref_name }}
+          files: |
+            dist/EdgeFormEditor-win-x64.zip
+            dist/SelfContained/EdgeFormEditor.exe

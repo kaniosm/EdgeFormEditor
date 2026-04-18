@@ -338,9 +338,13 @@ namespace EdgeFormEditor
                 return;
             }
 
-            dgvAutofill.Columns[_sortColumn].HeaderCell.SortGlyphDirection = _sortDirection == ListSortDirection.Ascending
-                ? SortOrder.Ascending
-                : SortOrder.Descending;
+            var sortColumn = dgvAutofill.Columns[_sortColumn];
+            if (sortColumn is not null)
+            {
+                sortColumn.HeaderCell.SortGlyphDirection = _sortDirection == ListSortDirection.Ascending
+                    ? SortOrder.Ascending
+                    : SortOrder.Descending;
+            }
         }
 
         private void dgvAutofill_RowPrePaint(object? sender, DataGridViewRowPrePaintEventArgs e)
